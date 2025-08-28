@@ -104,7 +104,7 @@ class BankingService(
         accountIds: List<UUID> = emptyList(),
         block: () -> T,
     ): T {
-        val accounts = if (accountIds.isEmpty()) "" else " accounts=${accountIds.joinToString()}"
+        val accounts = accountIds.joinToString(prefix = " accounts=", separator = ",").takeIf { accountIds.isNotEmpty() } ?: ""
         logger.info("$operation requested: operationId=$operationId$accounts")
         return try {
             val result = block()

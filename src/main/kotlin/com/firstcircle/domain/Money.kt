@@ -4,7 +4,7 @@ import java.math.BigDecimal
 
 @JvmInline
 value class Money(
-    val amount: BigDecimal,
+    private val amount: BigDecimal,
 ) {
     init {
         require(amount.scale() <= 2) { "Max 2 decimals" }

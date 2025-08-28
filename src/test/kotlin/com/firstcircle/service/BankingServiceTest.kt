@@ -7,6 +7,9 @@ import com.firstcircle.infrastructure.repository.InMemoryAccountRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -110,6 +113,65 @@ class BankingServiceTest :
                     "WITHDRAW",
                     "TRANSFER",
                 )
+        }
+
+        "cannot deposit negative amount" {
+            val service = createService()
+            val acc = service.createAccount(UUID.randomUUID(), Money(BigDecimal(100)))
+
+            shouldThrow<IllegalArgumentException> {
+                service.deposit(UUID.randomUUID(), acc.id, Money(BigDecimal(-50)))
+            }
+        }
+
+        "cannot withdraw negative amount" {
+            val service = createService()
+            val acc = service.createAccount(UUID.randomUUID(), Money(BigDecimal(100)))
+
+            shouldThrow<IllegalArgumentException> {
+                service.withdraw(UUID.randomUUID(), acc.id, Money(BigDecimal(-30)))
+            }
+        }
+
+        "cannot create account with negative balance" {
+            val service = createService()
+            shouldThrow<IllegalArgumentException> {
+                service.createAccount(UUID.randomUUID(), Money(BigDecimal(-10)))
+            }
+        }
+
+        "concurrent deposits are consistent" {
+            val service = createService()
+            val acc = service.createAccount(UUID.randomUUID(), Money(BigDecimal(0)))
+
+            runBlocking {
+                val jobs =
+                    (1..100).map {
+                        async {
+                            service.deposit(UUID.randomUUID(), acc.id, Money(BigDecimal(1)))
+                        }
+                    }
+                jobs.awaitAll()
+            }
+
+            service.getBalance(acc.id) shouldBe Money(BigDecimal(100))
+        }
+
+        "failed operation does not block retry" {
+            val idempotencyKey = UUID.randomUUID()
+            val repo = InMemoryAccountRepository()
+            val idempotency = IdempotencyStore()
+            val audit = AuditLog()
+            val service = BankingService(repo, idempotency, audit)
+
+            // Simulate failure
+            shouldThrow<IllegalArgumentException> {
+                service.withdraw(idempotencyKey, UUID.randomUUID(), Money(BigDecimal(10)))
+            }
+
+            // Retry with same key but valid operation → should succeed
+            val acc = service.createAccount(idempotencyKey, Money(BigDecimal(50)))
+            service.getBalance(acc.id) shouldBe Money(BigDecimal(50))
         }
     })
 
