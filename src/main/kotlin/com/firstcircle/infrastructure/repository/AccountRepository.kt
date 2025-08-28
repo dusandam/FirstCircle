@@ -1,6 +1,6 @@
-package org.example.com.firstcircle.infrastructure.repository
+package com.firstcircle.infrastructure.repository
 
-import org.example.com.firstcircle.domain.Account
+import com.firstcircle.domain.Account
 import java.util.UUID
 
 interface AccountRepository {

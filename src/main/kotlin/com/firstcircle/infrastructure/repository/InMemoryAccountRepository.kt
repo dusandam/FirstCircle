@@ -1,6 +1,7 @@
-package org.example.com.firstcircle.infrastructure.repository
+package com.firstcircle.infrastructure.repository
 
-import org.example.com.firstcircle.domain.Account
+import com.firstcircle.domain.Account
+import com.firstcircle.infrastructure.repository.AccountRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap

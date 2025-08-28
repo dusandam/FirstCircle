@@ -1,7 +1,7 @@
-package org.example.com.firstcircle.infrastructure
+package com.firstcircle.infrastructure
 
-import org.example.com.firstcircle.domain.AuditLogEntry
-import org.example.com.firstcircle.domain.Money
+import com.firstcircle.domain.AuditLogEntry
+import com.firstcircle.domain.Money
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.util.UUID

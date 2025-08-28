@@ -1,4 +1,4 @@
-package org.example.com.firstcircle.domain
+package com.firstcircle.domain
 
 import java.math.BigDecimal
 

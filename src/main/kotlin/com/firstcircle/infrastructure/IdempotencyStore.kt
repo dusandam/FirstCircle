@@ -1,4 +1,4 @@
-package org.example.com.firstcircle.infrastructure
+package com.firstcircle.infrastructure
 
 import org.springframework.stereotype.Service
 import java.util.UUID

@@ -1,13 +1,12 @@
 package com.firstcircle.service
 
+import com.firstcircle.domain.Money
+import com.firstcircle.infrastructure.AuditLog
+import com.firstcircle.infrastructure.IdempotencyStore
+import com.firstcircle.infrastructure.repository.InMemoryAccountRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import org.example.com.firstcircle.domain.Money
-import org.example.com.firstcircle.infrastructure.AuditLog
-import org.example.com.firstcircle.infrastructure.IdempotencyStore
-import org.example.com.firstcircle.infrastructure.repository.InMemoryAccountRepository
-import org.example.com.firstcircle.service.BankingService
 import java.math.BigDecimal
 import java.util.UUID
 

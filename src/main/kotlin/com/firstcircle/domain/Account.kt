@@ -1,4 +1,4 @@
-package org.example.com.firstcircle.domain
+package com.firstcircle.domain
 
 import java.time.Instant
 import java.util.UUID
