@@ -1,0 +1,122 @@
+package com.firstcircle.service
+
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import org.example.com.firstcircle.domain.Money
+import org.example.com.firstcircle.infrastructure.AuditLog
+import org.example.com.firstcircle.infrastructure.IdempotencyStore
+import org.example.com.firstcircle.infrastructure.repository.InMemoryAccountRepository
+import org.example.com.firstcircle.service.BankingService
+import java.math.BigDecimal
+import java.util.UUID
+
+class BankingServiceTest :
+    StringSpec({
+        "create account with initial deposit" {
+            val service = createService()
+            val account = service.createAccount(UUID.randomUUID(), Money(BigDecimal(200)))
+
+            service.getBalance(account.id) shouldBe Money(BigDecimal(200))
+        }
+
+        "deposit increases balance" {
+            val service = createService()
+            val account = service.createAccount(UUID.randomUUID(), Money(BigDecimal(100)))
+
+            service.deposit(UUID.randomUUID(), account.id, Money(BigDecimal(50)))
+            service.getBalance(account.id) shouldBe Money(BigDecimal(150))
+        }
+
+        "withdraw decreases balance" {
+            val service = createService()
+            val account = service.createAccount(UUID.randomUUID(), Money(BigDecimal(200)))
+
+            service.withdraw(UUID.randomUUID(), account.id, Money(BigDecimal(75)))
+            service.getBalance(account.id) shouldBe Money(BigDecimal(125))
+        }
+
+        "transfer moves money between accounts" {
+            val service = createService()
+            val acc1 = service.createAccount(UUID.randomUUID(), Money(BigDecimal(300)))
+            val acc2 = service.createAccount(UUID.randomUUID(), Money(BigDecimal(100)))
+
+            service.transfer(UUID.randomUUID(), acc1.id, acc2.id, Money(BigDecimal(50)))
+
+            service.getBalance(acc1.id) shouldBe Money(BigDecimal(250))
+            service.getBalance(acc2.id) shouldBe Money(BigDecimal(150))
+        }
+
+        "get balance returns correct value after multiple operations" {
+            val service = createService()
+            val acc = service.createAccount(UUID.randomUUID(), Money(BigDecimal(500)))
+
+            service.deposit(UUID.randomUUID(), acc.id, Money(BigDecimal(200)))
+            service.withdraw(UUID.randomUUID(), acc.id, Money(BigDecimal(100)))
+            service.deposit(UUID.randomUUID(), acc.id, Money(BigDecimal(50)))
+
+            service.getBalance(acc.id) shouldBe Money(BigDecimal(650))
+        }
+
+        // ======= Enhanced tests =======
+
+        "cannot withdraw more than balance" {
+            val service = createService()
+            val acc = service.createAccount(UUID.randomUUID(), Money(BigDecimal(100)))
+
+            shouldThrow<IllegalArgumentException> {
+                service.withdraw(UUID.randomUUID(), acc.id, Money(BigDecimal(200)))
+            }
+        }
+
+        "cannot transfer to self" {
+            val service = createService()
+            val acc = service.createAccount(UUID.randomUUID(), Money(BigDecimal(100)))
+
+            shouldThrow<IllegalArgumentException> {
+                service.transfer(UUID.randomUUID(), acc.id, acc.id, Money(BigDecimal(50)))
+            }
+        }
+
+        "idempotency prevents double execution" {
+            val service = createService()
+            val key = UUID.randomUUID()
+            val acc = service.createAccount(key, Money(BigDecimal(100)))
+
+            // retry with same idempotency key → balance unchanged
+            val retry = service.createAccount(key, Money(BigDecimal(100)))
+            retry.id shouldBe acc.id
+            service.getBalance(acc.id) shouldBe Money(BigDecimal(100))
+        }
+
+        "audit log contains all operations" {
+            val repo = InMemoryAccountRepository()
+            val idempotency = IdempotencyStore()
+            val audit = AuditLog()
+            val service = BankingService(repo, idempotency, audit)
+
+            val acc1 = service.createAccount(UUID.randomUUID(), Money(BigDecimal(200)))
+            val acc2 = service.createAccount(UUID.randomUUID(), Money(BigDecimal(100)))
+
+            service.deposit(UUID.randomUUID(), acc1.id, Money(BigDecimal(50)))
+            service.withdraw(UUID.randomUUID(), acc2.id, Money(BigDecimal(20)))
+            service.transfer(UUID.randomUUID(), acc1.id, acc2.id, Money(BigDecimal(30)))
+
+            val logs = audit.entries()
+            logs.map { it.operation } shouldBe
+                listOf(
+                    "CREATE_ACCOUNT",
+                    "CREATE_ACCOUNT",
+                    "DEPOSIT",
+                    "WITHDRAW",
+                    "TRANSFER",
+                )
+        }
+    })
+
+fun createService(): BankingService {
+    val repo = InMemoryAccountRepository()
+    val idempotencyStore = IdempotencyStore()
+    val audit = AuditLog()
+    return BankingService(repo, idempotencyStore, audit)
+}
