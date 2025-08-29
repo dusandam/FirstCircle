@@ -69,6 +69,6 @@ Tests are implemented using Kotest. They cover:
 - JUnit 5 (via Spring Boot Test starter)
 - Kotest 5.9.1 (JUnit5 runner)
   
-##Quickstart:
+## Quickstart:
 
 mvn test
