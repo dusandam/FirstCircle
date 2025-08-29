@@ -26,9 +26,6 @@ Note: The term service here refers to a software component/module, not a deploya
 ## Implementation Highlights
 
 ### Language & Framework: Kotlin + Spring.
-### System Requirements:
-- JDK 17+
-- Maven 3.8+.
 
 ### Concurrency & Thread-Safety:
 
@@ -63,6 +60,15 @@ Tests are implemented using Kotest. They cover:
 
 - Edge cases: overdraft prevention, self-transfer prevention.
 
-To run the tests:
+### System Requirements:
+- JDK 17+
+- Maven 3.8+
+- Kotlin 2.0.21
+- Spring Boot 3.5.5
+## Testing
+- JUnit 5 (via Spring Boot Test starter)
+- Kotest 5.9.1 (JUnit5 runner)
+  
+##Quickstart:
 
 mvn test
