@@ -26,6 +26,9 @@ Note: The term service here refers to a software component/module, not a deploya
 ## Implementation Highlights
 
 ### Language & Framework: Kotlin + Spring.
+### System Requirements:
+- JDK 17+
+- Maven 3.8+.
 
 ### Concurrency & Thread-Safety:
 
